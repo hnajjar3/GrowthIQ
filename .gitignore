@@ -2,6 +2,5 @@
 *.csv
 *.json
 __pycache__
-growthiq/screenshots
 poetry.lock
 tests/
