@@ -104,10 +104,10 @@ Now the web app will open up in your browser (if not copy Local URL and paste in
 
 ## Screenshots
 
-![Dashboard screening view](screenshots/screening_view.png)
+![Dashboard screening view](growthiq/screenshots/screening_view.png)
 *Fig. 1: Analyze results of screening*
 
-![Dashboard filtering view ](screenshots/filtering_view.png)
+![Dashboard filtering view ](growthiq/screenshots/filtering_view.png)
 *Fig. 2: Apply filters to hone in further*
 
 ## Contributing
