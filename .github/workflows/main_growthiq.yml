@@ -65,9 +65,3 @@ jobs:
           app-name: 'GrowthIQ'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_788D1A24118E435DB8120009A942AFFC }}
-
-      # Post-build command to run Streamlit app
-      - name: Post-build: Run Streamlit app
-        run: |
-          source venv/bin/activate
-          streamlit run growth_dashboard.py
