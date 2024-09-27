@@ -1,10 +1,11 @@
+import requests
+import logging
+import os
+import json
 import streamlit as st
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
-import logging
-import os
-import json
 from plot_data import plot_fundamentals, plot_technical_chart
 
 # Set up logging
@@ -37,6 +38,26 @@ filter_logic = st.sidebar.selectbox("Screening Logic", ['ALL', 'ANY'])
 
 # Button to run the screening
 run_screening = st.sidebar.button("RUN SCREENING")
+
+
+# Function to fetch JSON data from URL
+def fetch_data_from_azure_blob(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+        return response.json()  # Parse the JSON content
+    except requests.exceptions.RequestException as e:
+        st.error(f"Failed to fetch data: {e}")
+        return None
+
+# Load and cache the screened data for performance
+@st.cache_data
+def load_screened_data():
+    if os.path.exists('screened_data.json'):
+        return pd.read_json('screened_data.json')
+    else:
+        st.error("No screened data found. Please run the screening first.")
+        return None
 
 # Function to get tickers for the selected market index
 def get_tickers(market_index):
@@ -147,23 +168,29 @@ def fetch_and_process_data(
     filter_logic,
     index_name="S&P500 Index"  # You can choose between S&P500, NASDAQ, or Dow Jones
 ):
-    # Map index name to corresponding pre-fetched data file
+    # Map index name to corresponding pre-fetched data file (URLs)
     index_file_map = {
-        "S&P500 Index": "s&p500_index_data.json",
-        "NASDAQ Composite": "nasdaq_composite_data.json",
-        "Dow Jones Industrial Index": "dow_jones_industrial_index_data.json"
+        "S&P500 Index": "https://stocktickerdata.blob.core.windows.net/stocktickerdata/s&p500_index_data.json",
+        "NASDAQ Composite": "https://stocktickerdata.blob.core.windows.net/stocktickerdata/nasdaq_composite_data.json",
+        "Dow Jones Industrial Index": "https://stocktickerdata.blob.core.windows.net/stocktickerdata/dow_jones_industrial_index_data.json"
     }
-    
-    # Get the appropriate file for the selected index
-    data_file = index_file_map.get(index_name)
 
-    if not data_file or not os.path.exists(data_file):
-        st.error(f"No pre-fetched data file found for {index_name}. Please make sure the data is pre-fetched.")
+    # Get the appropriate file for the selected index
+    data_file_url = index_file_map.get(index_name)
+
+    if not data_file_url:
+        st.error(f"No pre-fetched data file found for {index_name}.")
         return pd.DataFrame()
 
-    # Load the pre-fetched data
-    with open(data_file, 'r') as f:
-        data_list = json.load(f)
+    # Fetch data from the URL
+    data_list = fetch_data_from_azure_blob(data_file_url)
+
+    # Convert JSON to DataFrame
+    if data_list:
+        df = pd.DataFrame(data_list)
+    else:
+        st.error("No data available after fetching.")
+        return pd.DataFrame()
 
     # Filter the data for the selected tickers
     results = []
@@ -333,36 +360,7 @@ def fetch_and_process_data(
 
     return screened_df
 
-# Run screening when button is pressed
-if run_screening:
-    with st.spinner('Running screening...'):
-        print("Selected market ", selected_market)
-        tickers = get_tickers(selected_market)
-        screened_data = fetch_and_process_data(
-            tickers,
-            growth_type,
-            revenue_growth_threshold,
-            net_income_growth_threshold,
-            fcf_growth_threshold,
-            rs_threshold,
-            filter_logic,
-            selected_market
-        )
-        # Save screened data to JSON
-        screened_data.to_json('screened_data.json', orient='records')
-    st.success('Screening completed and data saved!')
-
-# Load and cache the screened data for performance
-@st.cache_data
-def load_screened_data():
-    if os.path.exists('screened_data.json'):
-        return pd.read_json('screened_data.json')
-    else:
-        st.error("No screened data found. Please run the screening first.")
-        return None
-
 # Main part of the app
-
 # Initialize session state variables
 if 'disable_view_filter_controls' not in st.session_state:
     st.session_state.disable_view_filter_controls = False
@@ -381,6 +379,29 @@ show_filtering = st.sidebar.checkbox(
     "Show Filtering Result", 
     value=st.session_state.show_filtering
 )
+
+# Run screening when button is pressed
+if run_screening:
+    with st.spinner('Running screening...'):
+        print("Selected market ", selected_market)
+        tickers = get_tickers(selected_market)
+        screened_data = fetch_and_process_data(
+            tickers,
+            growth_type,
+            revenue_growth_threshold,
+            net_income_growth_threshold,
+            fcf_growth_threshold,
+            rs_threshold,
+            filter_logic,
+            selected_market
+        )
+        # Save screened data to JSON
+        screened_data.to_json('screened_data.json', orient='records')
+        # Clear cache to ensure new data is loaded
+        st.cache_data.clear()
+
+    st.success('Screening completed and data saved!')
+    screened_data = load_screened_data()
 
 screened_data = load_screened_data()
 
@@ -455,7 +476,7 @@ if screened_data is not None and not screened_data.empty:
 
             print("screened_data ", screened_data)
             filtered_data = apply_filters(screened_data)
-
+        
 else:
     st.write("Please set the screening criteria and click 'RUN SCREENING' to begin.")
     screened_data = load_screened_data()
@@ -484,6 +505,8 @@ if show_filtering and view_filter_controls:
             if selected_ticker:
                 st.subheader(f"{company_names[selected_ticker]} ({selected_ticker})")
                 fetch_and_plot_data(selected_ticker, selected_period)
+            
+        st.cache_data.clear()  # Clear cache
 
 else:
     st.warning("Select filtering options from Filter Controls. Then select \'Show Filtering Result'\ to view filtered data.")
