@@ -350,10 +350,10 @@ if run_screening:
         )
         # Save screened data to JSON
         screened_data.to_json('screened_data.json', orient='records')
+        print(screened_data)
     st.success('Screening completed and data saved!')
 
 # Load and cache the screened data for performance
-@st.cache_data
 def load_screened_data():
     if os.path.exists('screened_data.json'):
         return pd.read_json('screened_data.json')
@@ -394,12 +394,9 @@ if view_screening:
             first_ticker = screened_data['Ticker'].to_list()[0]
             company_name = dict(zip(screened_data['Ticker'], screened_data['Company Name']))[first_ticker]
             # Clear the cache to load new data
-            st.cache_data.clear()
+            #st.cache_data.clear()
         else:
             logging.warning("Screened data is empty")
-
-# Load the screened data after screening
-screened_data = load_screened_data()
 
 if screened_data is not None and not screened_data.empty:
     # Collapsible filters
