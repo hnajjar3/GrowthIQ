@@ -1,10 +1,11 @@
+import requests
+import logging
+import os
+import json
 import streamlit as st
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
-import logging
-import os
-import json
 from plot_data import plot_fundamentals, plot_technical_chart
 
 # Set up logging
@@ -37,6 +38,25 @@ filter_logic = st.sidebar.selectbox("Screening Logic", ['ALL', 'ANY'])
 
 # Button to run the screening
 run_screening = st.sidebar.button("RUN SCREENING")
+
+# Map index name to corresponding pre-fetched data file
+index_file_map = {
+    "S&P500 Index": "https://stocktickerdata.blob.core.windows.net/stocktickerdata/s&p500_index_data.json",
+    "NASDAQ Composite": "https://stocktickerdata.blob.core.windows.net/stocktickerdata/nasdaq_composite_data.json",
+    "Dow Jones Industrial Index": "https://stocktickerdata.blob.core.windows.net/stocktickerdata/dow_jones_industrial_index_data.json"
+}
+
+
+# Function to fetch JSON data from a URL (Azure Blob URL)
+@st.cache_data(show_spinner=True)
+def fetch_data_from_azure_blob(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Check if the request was successful (status code 200)
+        return response.json()  # Parse the JSON response
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching data: {e}")
+        return None
 
 # Function to get tickers for the selected market index
 def get_tickers(market_index):
@@ -147,23 +167,22 @@ def fetch_and_process_data(
     filter_logic,
     index_name="S&P500 Index"  # You can choose between S&P500, NASDAQ, or Dow Jones
 ):
-    # Map index name to corresponding pre-fetched data file
-    index_file_map = {
-        "S&P500 Index": "s&p500_index_data.json",
-        "NASDAQ Composite": "nasdaq_composite_data.json",
-        "Dow Jones Industrial Index": "dow_jones_industrial_index_data.json"
-    }
-    
     # Get the appropriate file for the selected index
-    data_file = index_file_map.get(index_name)
+    data_file_url = index_file_map.get(index_name)
 
-    if not data_file or not os.path.exists(data_file):
-        st.error(f"No pre-fetched data file found for {index_name}. Please make sure the data is pre-fetched.")
+    if not data_file_url:
+        st.error(f"No pre-fetched data file found for {index_name}.")
         return pd.DataFrame()
 
-    # Load the pre-fetched data
-    with open(data_file, 'r') as f:
-        data_list = json.load(f)
+    # Fetch data from the URL
+    data_list = fetch_data_from_azure_blob(data_file_url)
+
+    # Convert JSON to DataFrame
+    if data_list:
+        df = pd.DataFrame(data_list)
+    else:
+        st.error("No data available after fetching.")
+        return pd.DataFrame()
 
     # Filter the data for the selected tickers
     results = []

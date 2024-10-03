@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "multi-indicator-strategy"
-version = "0.1.0"
+name = "GrowthIQ"
+version = "0.2.0"
 description = ""
 authors = ["Hassan K. Najjar <hnajjar.ab@gmail.com>"]
 readme = "README.md"

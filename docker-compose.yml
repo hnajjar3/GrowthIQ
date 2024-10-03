@@ -1,4 +1,3 @@
-version: "3.9"  # Remove the version if it's causing issues, since it's deprecated
 
 services:
   app:
