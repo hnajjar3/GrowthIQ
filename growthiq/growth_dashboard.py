@@ -71,7 +71,7 @@ def get_tickers(market_index):
         return comp_list
     elif market_index == 'NASDAQ Composite':
         # For NASDAQ Composite, we'll use a sample due to the large number of tickers
-        comp_list = pd.read_csv("nasdaq_components.csv")['Symbol'].to_list()
+        comp_list = pd.read_csv("./growthiq/nasdaq_components.csv")['Symbol'].to_list()
         print(comp_list)
         return comp_list
     else:
@@ -375,7 +375,7 @@ if run_screening:
 # Load and cache the screened data for performance
 def load_screened_data():
     if os.path.exists('screened_data.json'):
-        return pd.read_json('screened_data.json')
+        return pd.read_json('./growthiq/screened_data.json')
     else:
         st.error("No screened data found. Please run the screening first.")
         return None
