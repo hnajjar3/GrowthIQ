@@ -14,7 +14,8 @@ def get_tickers(market_index):
         print(comp_list)
         return comp_list
     elif market_index == 'Dow Jones Industrial Index':
-        comp_list = pd.read_html('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')[1]['Symbol'].tolist()
+        dow_tables = pd.read_html('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
+        comp_list = dow_tables[2]['Symbol'].tolist()
         print("Dow Jones Industrial Companies")
         print(comp_list)
         return comp_list
@@ -99,11 +100,16 @@ def prefetch_data():
     nasdaq_comp_tickers = get_tickers("NASDAQ Composite")
     dow_tickers = get_tickers("Dow Jones Industrial Index")
 
+    # Also add the corresponding index ticker itself for each
+    # so we can compute relative strength locally.
+    sp500_tickers.append("^GSPC")  # S&P 500 index ticker
+    nasdaq_comp_tickers.append("^IXIC")  # NASDAQ Composite index ticker
+    dow_tickers.append("^DJI")  # Dow Jones Industrial Average index ticker
+
     # Fetch and store data for each index in separate files
     fetch_ticker_data(sp500_tickers, "S&P500 Index")
     fetch_ticker_data(nasdaq_comp_tickers, "NASDAQ Composite")
     fetch_ticker_data(dow_tickers, "Dow Jones Industrial Index")
-
 
 if __name__ == "__main__":
     prefetch_data()
