@@ -2,5 +2,4 @@
 *.csv
 *.json
 __pycache__
-poetry.lock
 tests/

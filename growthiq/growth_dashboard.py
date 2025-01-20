@@ -30,7 +30,7 @@ filter_logic = st.sidebar.selectbox("Screening Logic", ['ALL', 'ANY'])
 run_screening = st.sidebar.button("RUN SCREENING")
 
 index_file_map = {
-    "S&P500 Index": "./s&p500_index_data.json",
+    "S&P500 Index": "./growthiq/s&p500_index_data.json",
     "NASDAQ Composite": "./nasdaq_composite_data.json",
     "Dow Jones Industrial Index": "./dow_jones_industrial_index_data.json"
 }
