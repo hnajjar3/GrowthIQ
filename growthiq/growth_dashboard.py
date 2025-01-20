@@ -30,9 +30,9 @@ filter_logic = st.sidebar.selectbox("Screening Logic", ['ALL', 'ANY'])
 run_screening = st.sidebar.button("RUN SCREENING")
 
 index_file_map = {
-    "S&P500 Index": "./growthiq/s&p500_index_data.json",
-    "NASDAQ Composite": "./nasdaq_composite_data.json",
-    "Dow Jones Industrial Index": "./dow_jones_industrial_index_data.json"
+    "S&P500 Index": "growthiq/s&p500_index_data.json",
+    "NASDAQ Composite": "growthiq/nasdaq_composite_data.json",
+    "Dow Jones Industrial Index": "growthiq/dow_jones_industrial_index_data.json"
 }
 
 #####################################
@@ -48,7 +48,7 @@ def get_tickers(market_index):
         comp_list = djia_tables[2]['Symbol'].tolist()
         return comp_list
     elif market_index == 'NASDAQ Composite':
-        comp_list = pd.read_csv("nasdaq_components.csv")['Symbol'].to_list()
+        comp_list = pd.read_csv("growthiq/nasdaq_components.csv")['Symbol'].to_list()
         return comp_list
     else:
         return []
@@ -355,15 +355,15 @@ if run_screening:
             filter_logic,
             selected_market
         )
-        screened_data.to_json('screened_data.json', orient='records')
+        screened_data.to_json('growthiq/screened_data.json', orient='records')
     st.success('Screening completed and data saved!')
 
 #####################################
 # Load + Display Results
 #####################################
 def load_screened_data():
-    if os.path.exists('screened_data.json'):
-        return pd.read_json('screened_data.json')
+    if os.path.exists('growthiq/screened_data.json'):
+        return pd.read_json('growthiq/screened_data.json')
     else:
         st.error("No screened data found. Please run the screening first.")
         return None
